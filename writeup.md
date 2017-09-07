@@ -2,6 +2,7 @@
 # Vehicle Detection Project
 
 **Author: Igor Passchier**
+
 **email: igor.passchier@tassinternational.com**
 
 
@@ -58,7 +59,7 @@ In most cases, I created seperate blocks with the function definition, followed 
 
 In the section "Hog features extraction" I defined a generic function to call skimage.hog(), and return the feature fector and hog_image.
 
-####2. Explain how you settled on your final choice of HOG parameters.
+#### 2. Explain how you settled on your final choice of HOG parameters.
 
 I have played around with various values of orientation and pix_per_cell. These have a clear effect on the output hog image. I tried to make them small enough to still see clear features. Increasing them gives more details, but of course also large feature vector, and thus slower feature extraction and vehicle detection with the final pipeline. 
 
