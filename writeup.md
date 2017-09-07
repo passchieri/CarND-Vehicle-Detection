@@ -2,6 +2,7 @@
 # Vehicle Detection Project
 
 **Author: Igor Passchier**
+
 **email: igor.passchier@tassinternational.com**
 
 
