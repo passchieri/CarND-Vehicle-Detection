@@ -9,3 +9,5 @@ __pycache__
 
 test_images
 training_data
+examples
+.ipynb_checkpoints
