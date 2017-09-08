@@ -46,7 +46,7 @@ The goals / steps of this project are the following:
 
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  
 
-This document. References to the code are made to the sections in the jupyter notebook
+This document. References to the code are made to the sections in the jupyter [notebook](Vehicle-Detection.ipynb)
 
 ### Histogram of Oriented Gradients (HOG)
 
@@ -63,7 +63,7 @@ In the section "Hog features extraction" I defined a generic function to call sk
 
 I have played around with various values of orientation and pix_per_cell. These have a clear effect on the output hog image. I tried to make them small enough to still see clear features. Increasing them gives more details, but of course also large feature vector, and thus slower feature extraction and vehicle detection with the final pipeline. 
 
-I settled for orient=9 and pix_per_cell=8 as an acceptable comprimize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
+I settled for orient=11 and pix_per_cell=8 as an acceptable comprimize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
 
 I did something similar for the color spaces. But also here, the final decission is only made during training of the classifier.
 
@@ -77,7 +77,7 @@ Below are examples for the Y channel of YCrCb color space, with the above mentio
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-Spatial binning is implemented in the "Spatial binning" section, while color histogramming is implemented in "Color histogramming". I played around with color spaces and looked visually to the differences in the histograms of the features. HSV color space gave the most pronounced differences, so that is what I decided to use.
+Spatial binning is implemented in the "Spatial binning" section, while color histogramming is implemented in "Color histogramming". I played around with color spaces and looked visually to the differences in the histograms of the features. YUV color space gave the most pronounced differences, so that is what I decided to use.
 Below are the test images for spatial binning and color histogramming, respectively.
 
 
@@ -85,7 +85,7 @@ Below are the test images for spatial binning and color histogramming, respectiv
 
 ![alt text][histcar]
 
-In the final feature set I used for the training, I decided to keep all three types of features: hog, spatial, and color.
+In the final feature set I used for the training, I decided to keep only two types of features: hog, and color histogram.
 
 In the section "Feature extraction" I implement the functions to extract the features from one or more images. `single_img_features` extracts the features of a single image, with all relevant parameters of the algorithm as function parameters. The defaults in the code are the values I finally used.
 
