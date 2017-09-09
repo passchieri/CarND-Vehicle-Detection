@@ -53,19 +53,19 @@ This document. References to the code are made to the sections in the jupyter [n
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
 The notebook starts with some imports and helper functions for plotting images. In the second section "Create training data file names" I have a generic function to create filenames based on a regexp. Anything with `non-vehicles` in the name is treated as not being a vehicle, while all others are considered cars. By default, I shuffle the data, and the function also allows to limit the number of images (useful for testing further on in the code with a limited set of images.
-The function `read_imnage` actually reads the file, and applies the required scaling in case of a .png file
+The function `read_image` actually reads the file, and applies the required scaling in case of a .png file
 
 In most cases, I created seperate blocks with the function definition, followed by a code block to execute the code and to play around with the parameters. In this case, I only print the number of images found, abouth 9000 cars and 9000 non-cars.
 
-In the section "Hog features extraction" I defined a generic function to call skimage.hog(), and return the feature fector and hog_image.
+In the section "Hog features extraction" I defined a generic function to call skimage.hog(), and return the feature vector and hog_image.
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
 I have played around with various values of orientation and pix_per_cell. These have a clear effect on the output hog image. I tried to make them small enough to still see clear features. Increasing them gives more details, but of course also large feature vector, and thus slower feature extraction and vehicle detection with the final pipeline. 
 
-I settled for orient=11 and pix_per_cell=16 as an acceptable comprimize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
+I settled for orient=11 and pix_per_cell=16 as an acceptable compromize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
 
-I did something similar for the color spaces. But also here, the final decission is only made during training of the classifier.
+I did something similar for the color spaces. But also here, the final decission is only made during training of the classifier, ending up in using YCrCb color space for the hog feature extraction.
 
 Below are examples for the Y channel of YCrCb color space, with the above mentioned values for the other parameters, for a car and non-car respectively. The hog images are clearly different, which should be good for the classifier.
 
@@ -102,7 +102,7 @@ In the section "Create training data", all steps are brought together:
 * line 51-53: splt the data in training and test data
 * line 56-61: provide some statistics over the whole process
 
-In the section "Train the model" I have implemented the training functions. I have started with a linear SVC model and used to investigate further the effects of hog parameters and color spaces. Afterwards, when I settled on the feature extraction parameters, I used GridSearchCV with SVC to optimize the parameters. As the parameter space is very large, I started by variying a single parameter in big steps, then with smaller steps around the optimium. Finally, a used a full parameter search for C and gamma in 3 steps each. Initially, I experimented with kernels `rbf` and `linear`, but found that the `rbf` kernel give better results. For the C parameter, I searched between 1-1000, and for gamma between 0.1-10 * 1/2000 (2000 is about the number of features in my feature vector. 1/number of features is the default, so therefore I searched around that value.
+In the section "Train the model" I have implemented the training functions. I have started with a linear SVC model and used to investigate further the effects of hog parameters and color spaces. Afterwards, when I settled on the feature extraction parameters, I used GridSearchCV with SVC to optimize the parameters. As the parameter space is very large, I started by variying a single parameter in big steps, then with smaller steps around the optimium. Finally, a used a full parameter search for C and gamma in 3 steps each. Initially, I experimented with kernels `rbf` and `linear`, but found that the `rbf` kernel gave better results. For the C parameter, I searched between 1-1000, and for gamma 0.0025,0.0005,0.0001,0.005,0.010 (2000 is about the number of features in my feature vector. 1/number of features is the default, so therefore I searched around that value:0.0005)
 
 I got the best results for 
 * kernel = rbf
@@ -116,8 +116,6 @@ In the next section, I created a classifier function `classify_image`, taking an
 In the section "Inspect incorrectly classified test images", I have inspected the images that remained incorrectly classified. Especially for the incorrectly classified cars it is clear that this are mainly car pictures taken from the rear-left. To fix this, a larger training set with these type of images are required.
 
 ![alt text][incorrectcars]
-
-
 
 ### Sliding Window Search
 
