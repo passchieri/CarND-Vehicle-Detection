@@ -63,7 +63,7 @@ In the section "Hog features extraction" I defined a generic function to call sk
 
 I have played around with various values of orientation and pix_per_cell. These have a clear effect on the output hog image. I tried to make them small enough to still see clear features. Increasing them gives more details, but of course also large feature vector, and thus slower feature extraction and vehicle detection with the final pipeline. 
 
-I settled for orient=11 and pix_per_cell=8 as an acceptable comprimize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
+I settled for orient=11 and pix_per_cell=16 as an acceptable comprimize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
 
 I did something similar for the color spaces. But also here, the final decission is only made during training of the classifier.
 
@@ -77,7 +77,7 @@ Below are examples for the Y channel of YCrCb color space, with the above mentio
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-Spatial binning is implemented in the "Spatial binning" section, while color histogramming is implemented in "Color histogramming". I played around with color spaces and looked visually to the differences in the histograms of the features. YUV color space gave the most pronounced differences, so that is what I decided to use.
+Spatial binning is implemented in the "Spatial binning" section, while color histogramming is implemented in "Color histogramming". I played around with color spaces and looked visually to the differences in the histograms of the features. HSV color space gave the most pronounced differences, so that is what I decided to use.
 Below are the test images for spatial binning and color histogramming, respectively.
 
 
@@ -85,7 +85,7 @@ Below are the test images for spatial binning and color histogramming, respectiv
 
 ![alt text][histcar]
 
-In the final feature set I used for the training, I decided to keep only two types of features: hog, and color histogram.
+In the final feature set I used for the training, I decided to keep all types of features: hog, spatial binning and color histogram.
 
 In the section "Feature extraction" I implement the functions to extract the features from one or more images. `single_img_features` extracts the features of a single image, with all relevant parameters of the algorithm as function parameters. The defaults in the code are the values I finally used.
 
@@ -109,7 +109,7 @@ I got the best results for
 * C=10
 * gamma=0.0005
 
-Resulting in a test accuracy of 0.9977
+Resulting in a test accuracy of 0.9958
 
 In the next section, I created a classifier function `classify_image`, taking an input image and returning the classification prediction.
 
@@ -157,11 +157,11 @@ Next step is to combine the pixels in all hot windows, apply a threshold, and ge
 
 In "Optimized function to determine hot windows" I have implemented a function `find_cars` This function scans the image for all windows of a specific scale, by combining feature extraction and classification.
 
-In line 12-23 the relevant area of the image is selected, scaled and color converted.
-In line 38-40 the hog features for the complete area are determined.
-In line 42-66, the image area is scanned with the window, features are extracted, and classification is performed.
+In line 12-24 the relevant area of the image is selected, scaled and color converted.
+In line 38-41 the hog features for the complete area are determined.
+In line 42-68, the image area is scanned with the window, features are extracted, and classification is performed.
 
-In line 67, I draw the result on the image. I trick the system by setting the `all` parameter to `True`, which provides me an image overlayed with all the windows being scanned. This is useful for debugging, not for the final result.
+In line 70, I draw the result on the image. I trick the system by setting the `all` parameter to `True`, which provides me an image overlayed with all the windows being scanned. This is useful for debugging, not for the final result.
 
 The `search_one_fast` function uses the find_cars function at different scales and different areas, and combines the hot windows. The function allows to use 4 different windows size, which can be turned on and off via changing the (hard_coded) True and False values (e.g. in line 8, 17, etc.). The `search_one_fast` function is a drop in replacement of the `search_one` function defined earlier, allowing easy switching in the pipeliine between the two.
 
@@ -173,9 +173,9 @@ The pipeline function contains 2 optimizations:
 1. To optimize tuning speed, a parameter `ratio` is used. This is the ratio between number of frames in the video, and number of frames analysed. So if ratio=1, all frames are analysed, but if ratio=25, only 1 frame per second (25 Hz video) is analysed. In that way, I can go through the complete video and sample only a subset of the images. This greatly speeds up tuning times
 2. The second optimization is to reduce false positives, and to stabalize the detected bounding boxes. The global parameter `roling` determines over how many heatmaps from consequetive frames an integrated heatmap is generated. A threshold `roling_threshold` on the integrated heatmap is specified, similar to the threshold on the heatmap of the individual frames.
 
-The roling average works best if the normal threshold on the heatmap is put to 0 (so no threshold on the individual heatmaps), and a threshold slightly larger than the number of frames averaged in the roling average. In this way, an area needs to be identified in more than one window in at least one frame, and should be identified in the majority of frames at least once. 
+The roling average works best after a normal threshold is applied per heatmap, and a threshold is applied to the roling average to filter out false positives. 
 
-If the roling average is done over too many frames, the bounding box starts lagging behind. Therefore, I fixed the roling average over 5 frames, and a threshold of 6.
+If the roling average is done over too many frames, the bounding box starts lagging behind. Therefore, I fixed the roling average over 10 frames, and a threshold of 0.1.
 
 A example from the final pipeline is shown below
 
