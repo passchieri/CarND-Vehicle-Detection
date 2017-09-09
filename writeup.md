@@ -46,26 +46,26 @@ The goals / steps of this project are the following:
 
 #### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  
 
-This document. References to the code are made to the sections in the jupyter notebook
+This document. References to the code are made to the sections in the jupyter [notebook](Vehicle-Detection.ipynb)
 
 ### Histogram of Oriented Gradients (HOG)
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
 The notebook starts with some imports and helper functions for plotting images. In the second section "Create training data file names" I have a generic function to create filenames based on a regexp. Anything with `non-vehicles` in the name is treated as not being a vehicle, while all others are considered cars. By default, I shuffle the data, and the function also allows to limit the number of images (useful for testing further on in the code with a limited set of images.
-The function `read_imnage` actually reads the file, and applies the required scaling in case of a .png file
+The function `read_image` actually reads the file, and applies the required scaling in case of a .png file
 
 In most cases, I created seperate blocks with the function definition, followed by a code block to execute the code and to play around with the parameters. In this case, I only print the number of images found, abouth 9000 cars and 9000 non-cars.
 
-In the section "Hog features extraction" I defined a generic function to call skimage.hog(), and return the feature fector and hog_image.
+In the section "Hog features extraction" I defined a generic function to call skimage.hog(), and return the feature vector and hog_image.
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
 I have played around with various values of orientation and pix_per_cell. These have a clear effect on the output hog image. I tried to make them small enough to still see clear features. Increasing them gives more details, but of course also large feature vector, and thus slower feature extraction and vehicle detection with the final pipeline. 
 
-I settled for orient=9 and pix_per_cell=8 as an acceptable comprimize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
+I settled for orient=11 and pix_per_cell=16 as an acceptable compromize. Later, during training of the classifier I made small variations around those values to see the effect on the speed and quality of the classifier.
 
-I did something similar for the color spaces. But also here, the final decission is only made during training of the classifier.
+I did something similar for the color spaces. But also here, the final decission is only made during training of the classifier, ending up in using YCrCb color space for the hog feature extraction.
 
 Below are examples for the Y channel of YCrCb color space, with the above mentioned values for the other parameters, for a car and non-car respectively. The hog images are clearly different, which should be good for the classifier.
 
@@ -85,7 +85,7 @@ Below are the test images for spatial binning and color histogramming, respectiv
 
 ![alt text][histcar]
 
-In the final feature set I used for the training, I decided to keep all three types of features: hog, spatial, and color.
+In the final feature set I used for the training, I decided to keep all types of features: hog, spatial binning and color histogram.
 
 In the section "Feature extraction" I implement the functions to extract the features from one or more images. `single_img_features` extracts the features of a single image, with all relevant parameters of the algorithm as function parameters. The defaults in the code are the values I finally used.
 
@@ -102,22 +102,20 @@ In the section "Create training data", all steps are brought together:
 * line 51-53: splt the data in training and test data
 * line 56-61: provide some statistics over the whole process
 
-In the section "Train the model" I have implemented the training functions. I have started with a linear SVC model and used to investigate further the effects of hog parameters and color spaces. Afterwards, when I settled on the feature extraction parameters, I used GridSearchCV with SVC to optimize the parameters. As the parameter space is very large, I started by variying a single parameter in big steps, then with smaller steps around the optimium. Finally, a used a full parameter search for C and gamma in 3 steps each. Initially, I experimented with kernels `rbf` and `linear`, but found that the `rbf` kernel give better results. For the C parameter, I searched between 1-1000, and for gamma between 0.1-10 * 1/2000 (2000 is about the number of features in my feature vector. 1/number of features is the default, so therefore I searched around that value.
+In the section "Train the model" I have implemented the training functions. I have started with a linear SVC model and used to investigate further the effects of hog parameters and color spaces. Afterwards, when I settled on the feature extraction parameters, I used GridSearchCV with SVC to optimize the parameters. As the parameter space is very large, I started by variying a single parameter in big steps, then with smaller steps around the optimium. Finally, a used a full parameter search for C and gamma in 3 steps each. Initially, I experimented with kernels `rbf` and `linear`, but found that the `rbf` kernel gave better results. For the C parameter, I searched between 1-1000, and for gamma 0.0025,0.0005,0.0001,0.005,0.010 (2000 is about the number of features in my feature vector. 1/number of features is the default, so therefore I searched around that value:0.0005)
 
 I got the best results for 
 * kernel = rbf
 * C=10
 * gamma=0.0005
 
-Resulting in a test accuracy of 0.9977
+Resulting in a test accuracy of 0.9958
 
 In the next section, I created a classifier function `classify_image`, taking an input image and returning the classification prediction.
 
 In the section "Inspect incorrectly classified test images", I have inspected the images that remained incorrectly classified. Especially for the incorrectly classified cars it is clear that this are mainly car pictures taken from the rear-left. To fix this, a larger training set with these type of images are required.
 
 ![alt text][incorrectcars]
-
-
 
 ### Sliding Window Search
 
@@ -145,7 +143,9 @@ Below is an example of the identified windows on a sample image
 
 ![][bboxed]
 
-Next step is to combine the pixels in all hot windows, apply a threshold, and generate labels for the resulting areas. This is done in section "Heat mapping and labels". The images below show the heatmap, labels, and final boundingbox of the identied cars on a sample image.
+Next step is to combine the pixels in all hot windows, apply a threshold, and generate labels for the resulting areas. This is done in section "Heat mapping and labels". 
+
+The images below show the heatmap, labels, and final boundingbox of the identied cars on a sample image.
 
 ![][heatmap]
 
@@ -157,11 +157,11 @@ Next step is to combine the pixels in all hot windows, apply a threshold, and ge
 
 In "Optimized function to determine hot windows" I have implemented a function `find_cars` This function scans the image for all windows of a specific scale, by combining feature extraction and classification.
 
-In line 12-23 the relevant area of the image is selected, scaled and color converted.
-In line 38-40 the hog features for the complete area are determined.
-In line 42-66, the image area is scanned with the window, features are extracted, and classification is performed.
+In line 12-24 the relevant area of the image is selected, scaled and color converted.
+In line 38-41 the hog features for the complete area are determined.
+In line 42-68, the image area is scanned with the window, features are extracted, and classification is performed.
 
-In line 67, I draw the result on the image. I trick the system by setting the `all` parameter to `True`, which provides me an image overlayed with all the windows being scanned. This is useful for debugging, not for the final result.
+In line 70, I draw the result on the image. I trick the system by setting the `all` parameter to `True`, which provides me an image overlayed with all the windows being scanned. This is useful for debugging, not for the final result.
 
 The `search_one_fast` function uses the find_cars function at different scales and different areas, and combines the hot windows. The function allows to use 4 different windows size, which can be turned on and off via changing the (hard_coded) True and False values (e.g. in line 8, 17, etc.). The `search_one_fast` function is a drop in replacement of the `search_one` function defined earlier, allowing easy switching in the pipeliine between the two.
 
@@ -169,15 +169,18 @@ Development performance was optimized by making a save and restore function for 
 
 Then, in "Pipeline definition" I implement an initialization function, to (re)set all global parameters used, and a pipeline function.
 
-The pipeline function contains 2 optimizations:
+The pipeline function contains 3 optimizations:
 1. To optimize tuning speed, a parameter `ratio` is used. This is the ratio between number of frames in the video, and number of frames analysed. So if ratio=1, all frames are analysed, but if ratio=25, only 1 frame per second (25 Hz video) is analysed. In that way, I can go through the complete video and sample only a subset of the images. This greatly speeds up tuning times
-2. The second optimization is to reduce false positives, and to stabalize the detected bounding boxes. The global parameter `roling` determines over how many heatmaps from consequetive frames an integrated heatmap is generated. A threshold `roling_threshold` on the integrated heatmap is specified, similar to the threshold on the heatmap of the individual frames.
+2. The second optimization is to use heatmaps based on a weight value for every window with a detected vehicle. In line 76 of `find_cars` the weight is calculated best on the value of `svc.decision_function` multiplied by the scale of the window being search. The decision_function gives a measure about the reliability of the classifier itself. I decided to add the scale, as the detections of large cars seem to be more reliable and to contain less false positives.
+3. The third optimization is to reduce false positives, and to stabalize the detected bounding boxes. The global parameter `roling` determines over how many heatmaps from consequetive frames an integrated heatmap is generated. A threshold `roling_threshold` on the integrated heatmap is specified, similar to the threshold on the heatmap of the individual frames.
 
-The roling average works best if the normal threshold on the heatmap is put to 0 (so no threshold on the individual heatmaps), and a threshold slightly larger than the number of frames averaged in the roling average. In this way, an area needs to be identified in more than one window in at least one frame, and should be identified in the majority of frames at least once. 
 
-If the roling average is done over too many frames, the bounding box starts lagging behind. Therefore, I fixed the roling average over 5 frames, and a threshold of 6.
+To tune the threshold on the heatmaps generated from the weights, I have taken snapshots of several examples with false positives when the weights are not used. For these, I run the car search and apply different thresholds to the heatmap to see when the false positives are rejected, but the actual vehicles are kept in. By doing so, I settled the threshold at 0.25 for the individual heatmaps.
+![][heatmapsearch]
 
-A example from the final pipeline is shown below
+If the roling average is done over too many frames, the bounding box starts lagging behind. Therefore, I fixed the roling average over 10 frames, and a threshold of 0.1. Note, that the heatmaps in the roling average are not just summed, but actually averaged. Furthermore, because weights are used, the threshold value itself is rather small.
+
+A example from the final pipeline is shown below.
 
 
 ![][final]
