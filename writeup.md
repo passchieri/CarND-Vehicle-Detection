@@ -143,7 +143,9 @@ Below is an example of the identified windows on a sample image
 
 ![][bboxed]
 
-Next step is to combine the pixels in all hot windows, apply a threshold, and generate labels for the resulting areas. This is done in section "Heat mapping and labels". The images below show the heatmap, labels, and final boundingbox of the identied cars on a sample image.
+Next step is to combine the pixels in all hot windows, apply a threshold, and generate labels for the resulting areas. This is done in section "Heat mapping and labels". 
+
+The images below show the heatmap, labels, and final boundingbox of the identied cars on a sample image.
 
 ![][heatmap]
 
@@ -167,15 +169,18 @@ Development performance was optimized by making a save and restore function for 
 
 Then, in "Pipeline definition" I implement an initialization function, to (re)set all global parameters used, and a pipeline function.
 
-The pipeline function contains 2 optimizations:
+The pipeline function contains 3 optimizations:
 1. To optimize tuning speed, a parameter `ratio` is used. This is the ratio between number of frames in the video, and number of frames analysed. So if ratio=1, all frames are analysed, but if ratio=25, only 1 frame per second (25 Hz video) is analysed. In that way, I can go through the complete video and sample only a subset of the images. This greatly speeds up tuning times
-2. The second optimization is to reduce false positives, and to stabalize the detected bounding boxes. The global parameter `roling` determines over how many heatmaps from consequetive frames an integrated heatmap is generated. A threshold `roling_threshold` on the integrated heatmap is specified, similar to the threshold on the heatmap of the individual frames.
+2. The second optimization is to use heatmaps based on a weight value for every window with a detected vehicle. In line 76 of `find_cars` the weight is calculated best on the value of `svc.decision_function` multiplied by the scale of the window being search. The decision_function gives a measure about the reliability of the classifier itself. I decided to add the scale, as the detections of large cars seem to be more reliable and to contain less false positives.
+3. The third optimization is to reduce false positives, and to stabalize the detected bounding boxes. The global parameter `roling` determines over how many heatmaps from consequetive frames an integrated heatmap is generated. A threshold `roling_threshold` on the integrated heatmap is specified, similar to the threshold on the heatmap of the individual frames.
 
-The roling average works best after a normal threshold is applied per heatmap, and a threshold is applied to the roling average to filter out false positives. 
 
-If the roling average is done over too many frames, the bounding box starts lagging behind. Therefore, I fixed the roling average over 10 frames, and a threshold of 0.1.
+To tune the threshold on the heatmaps generated from the weights, I have taken snapshots of several examples with false positives when the weights are not used. For these, I run the car search and apply different thresholds to the heatmap to see when the false positives are rejected, but the actual vehicles are kept in. By doing so, I settled the threshold at 0.25 for the individual heatmaps.
+![][heatmapsearch]
 
-A example from the final pipeline is shown below
+If the roling average is done over too many frames, the bounding box starts lagging behind. Therefore, I fixed the roling average over 10 frames, and a threshold of 0.1. Note, that the heatmaps in the roling average are not just summed, but actually averaged. Furthermore, because weights are used, the threshold value itself is rather small.
+
+A example from the final pipeline is shown below.
 
 
 ![][final]
